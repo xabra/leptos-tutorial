@@ -14,12 +14,13 @@ fn App() -> impl IntoView {
     let values = vec![10, 11, 12];
     let (name, set_name) = create_signal("Controlled".to_string());
     let (value, set_value) = create_signal("B".to_string());
-    let (radius, set_radius) = create_signal(60.0);
+    let (radius, set_radius) = create_signal(30.0);
 
     view! {
         <button
             on:click=move |_| {
                 set_count.update(|n|*n += 1);
+                set_radius.update(|r| *r += 5.0);
             }
             class:red=move || count.get() % 2 == 1
         >
