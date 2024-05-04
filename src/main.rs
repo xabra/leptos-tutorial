@@ -14,7 +14,7 @@ fn App() -> impl IntoView {
     let values = vec![10, 11, 12];
     let (name, set_name) = create_signal("Controlled".to_string());
     let (value, set_value) = create_signal("B".to_string());
-    let (radius, set_radius) = create_signal(10.0);
+    let (radius, set_radius) = create_signal(60.0);
 
     view! {
         <button
@@ -75,7 +75,7 @@ fn App() -> impl IntoView {
             viewBox="0 0 500 300"
             xmlns="http://www.w3.org/2000/svg"
             >
-            <rect fill = "pink" width="500" height="300" />
+            <rect fill = "lightyellow" width="500" height="300" />
            //<circle stroke="red" fill="none" cx="50" cy="50" r="10" />
            // <line x1="0" y1="80" x2="100" y2="20" stroke="black" stroke-width = "1"/>
             <Circle x=30.0 y=40.0 r= radius/>
