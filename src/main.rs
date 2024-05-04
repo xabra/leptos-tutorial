@@ -12,6 +12,9 @@ fn App() -> impl IntoView {
     let (count, set_count) = create_signal(0);
     let double_count = Signal::derive(move || count.get() * 2);
     let values = vec![10, 11, 12];
+    let (name, set_name) = create_signal("Controlled".to_string());
+    let (value, set_value) = create_signal("B".to_string());
+    let (radius, set_radius) = create_signal(10.0);
 
     view! {
         <button
@@ -40,21 +43,62 @@ fn App() -> impl IntoView {
                 .collect_view()}
         </ul>
         // ------------------
-        <p>{"Dtnamic List (for)"}</p>
+        <p>{"Dynamic List (for)"}</p>
         <DynamicList initial_length=5/>
-        // --------------------
+        // -------- TEXT INPUT ------------
+        <input type="text"
+            on:input=move |ev| {
+                // event_target_value is a Leptos helper function
+                // it functions the same way as event.target.value
+                // in JavaScript, but smooths out some of the typecasting
+                // necessary to make this work in Rust
+                set_name.set(event_target_value(&ev));
+            }
+
+            // the `prop:` syntax lets you update a DOM property,
+            // rather than an attribute.
+            prop:value=name
+        />
+        <p>"Name is: " {name}</p>
+        // ------ SELECT ------------
+        <select on:change=move |ev| {
+            let new_value = event_target_value(&ev);
+            set_value.set(new_value);
+        }>
+            <SelectOption value is="A"/>
+            <SelectOption value is="B"/>
+            <SelectOption value is="C"/>
+        </select>
+        // ------- SVG --------
+
         <svg width="500" height="300"
             viewBox="0 0 500 300"
             xmlns="http://www.w3.org/2000/svg"
             >
             <rect fill = "pink" width="500" height="300" />
-            <circle stroke="red" fill="blue" cx="50" cy="50" r="10" />
-
-
+           //<circle stroke="red" fill="none" cx="50" cy="50" r="10" />
+           // <line x1="0" y1="80" x2="100" y2="20" stroke="black" stroke-width = "1"/>
+            <Circle x=30.0 y=40.0 r= radius/>
+            <path d="M 100 100 L 300 100 L 200 300 z"
+            fill="red" stroke="blue" stroke-width="3" />
+            // <foreignObject  x="20" y="20" width="160" height="160">
+            //     <input type="text"/>
+            //     <p>"Name is: Adam"</p>
+            // </foreignObject>
         </svg>
     }
 }
 
+#[component]
+fn Circle(x: f32, y: f32, r: ReadSignal<f32>) -> impl IntoView {
+    //let cx = x.to_string();
+    let cx = format!("{}", x);
+    let cy = y.to_string();
+    let r = r.get().to_string();
+    view! {
+       <circle stroke="red" fill="none" cx=cx cy=cy r=r/>
+    }
+}
 #[component]
 fn ProgressBar(
     #[prop(into)] progress: Signal<i32>,
@@ -65,6 +109,18 @@ fn ProgressBar(
             max=max
             value=progress
         />
+    }
+}
+
+#[component]
+pub fn SelectOption(is: &'static str, value: ReadSignal<String>) -> impl IntoView {
+    view! {
+        <option
+            value=is
+            selected=move || value.get() == is
+        >
+            {is}
+        </option>
     }
 }
 
