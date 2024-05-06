@@ -28,16 +28,17 @@ fn App() -> impl IntoView {
 
         // ------- SVG --------
         <svg width="500" height="500"
-            viewBox="0 0 500 500"
+            viewBox="-250 -250 500 500" // min-x, min-y, width, height
             xmlns="http://www.w3.org/2000/svg"
             >
             on:mousemove=move |_| {
                 logging::log!("Value: {}", 3);
             }
-            <rect fill = "lightyellow" width="500" height="500" />
-            <Circle x=250.0 y=250.0 r=radius/>
-            <Star x=250.0 y=250.0 r=100.0 n=300 />
-            <ArrowLine x1=30.0 y1 = 30.0 x2 = 250.0 y2 = 30.0 line_width = 1.0 head_width = 12.0 head_length = 20.0 barb_angle_deg=40.0 />
+            <rect fill = "lightyellow" x=-250 y=-250 width="500" height="500" />
+            <Circle x=0.0 y=0.0 r=radius/>
+            <Star x=0.0 y=0.0 r=100.0 n=36 />
+            <ArrowLine x1=20.0 y1 = 0.0 x2 = 200.0 y2 = 0.0 line_width = 1.0 head_width = 12.0 head_length = 20.0 barb_angle_deg=40.0 />
+            <ArrowStar x=30.0 y = 30.0 r=150.0 n=10 />
         </svg>
     }
 }
@@ -65,6 +66,27 @@ fn Star(x: f32, y: f32, r: f32, n: i32) -> impl IntoView {
             .collect_view()
     }
 }
+
+#[component]
+// Just a test component to draw a lot of lines
+fn ArrowStar(x: f32, y: f32, r: f32, n: i32) -> impl IntoView {
+    let lines = 0..n;
+    {
+        lines
+            .into_iter()
+            .map(|i| {
+                let theta = 2.0 * PI * (i as f32) / (n as f32);
+                let dx = r * theta.cos();
+                let dy = r * theta.sin();
+                view! { 
+                    //<line stroke="blue" x1={x} y1={y} x2={x+dx} y2={y+dy} />
+                    <ArrowLine x1={x} y1={y}  x2={x+dx} y2={y+dy} line_width = 1.0 head_width = 6.0 head_length = 10.0 barb_angle_deg=40.0 />
+                }
+            })
+            .collect_view()
+    }
+}
+
 #[component]
 fn ArrowLine(
     x1: f32,
@@ -84,6 +106,7 @@ fn ArrowLine(
     let barb_offset = barb_width * (barb_angle_deg * PI / 180.0).sin();
 
     // SHADOWING...
+    // Place the line on the +X axis then rotate to the correct angle at the end.
     let x2 = x1 + line_length;
     let y2 = y1;
 
@@ -112,7 +135,7 @@ fn ArrowLine(
         x1,
         y1
     );
-    let transform_str = format!("rotate({} {} {})", line_angle, 0, 0);
+    let transform_str = format!("rotate({} {} {})", line_angle, x1, y1);
     view! {
         <polyline points={pline_str} fill="black" stroke="none" transform={transform_str}/>
     }
