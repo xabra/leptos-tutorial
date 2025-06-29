@@ -3,87 +3,122 @@ fn main() {
     mount_to_body(App);
 }
 
-// Often, you want to pass some kind of child view to another
-// component. There are two basic patterns for doing this:
-// - "render props": creating a component prop that takes a function
-//   that creates a view
-// - the `children` prop: a special property that contains content
-//   passed as the children of a component in your view, not as a
-//   property
+use leptos::html::Input;
+use leptos::prelude::*;
+
+#[derive(Copy, Clone)]
+struct LogContext(RwSignal<Vec<String>>);
 
 #[component]
-pub fn App() -> impl IntoView {
-    let (items, set_items) = signal(vec![0, 1, 2]);
-    let render_prop = move || {
-        let len = move || items.read().len();
-        view! {
-            <p>"Length: " {len}</p>
+fn App() -> impl IntoView {
+    // Just making a visible log here
+    // You can ignore this...
+    let log = RwSignal::<Vec<String>>::new(vec![]);
+    let logged = move || log.get().join("\n");
+
+    // the newtype pattern isn't *necessary* here but is a good practice
+    // it avoids confusion with other possible future `RwSignal<Vec<String>>` contexts
+    // and makes it easier to refer to it
+    provide_context(LogContext(log));
+
+    view! {
+        <CreateAnEffect/>
+        <pre>{logged}</pre>
+    }
+}
+
+#[component]
+fn CreateAnEffect() -> impl IntoView {
+    let (first, set_first) = signal(String::new());
+    let (last, set_last) = signal(String::new());
+    let (use_last, set_use_last) = signal(true);
+
+    // this will add the name to the log
+    // any time one of the source signals changes
+    Effect::new(move |_| {
+        log(if use_last.get() {
+            let first = first.read();
+            let last = last.read();
+            format!("{first} {last}")
+        } else {
+            first.get()
+        })
+    });
+
+    view! {
+        <h1>
+            <code>"create_effect"</code>
+            " Version"
+        </h1>
+        <form>
+            <label>
+                "First Name"
+                <input
+                    type="text"
+                    name="first"
+                    prop:value=first
+                    on:change:target=move |ev| set_first.set(ev.target().value())
+                />
+            </label>
+            <label>
+                "Last Name"
+                <input
+                    type="text"
+                    name="last"
+                    prop:value=last
+                    on:change:target=move |ev| set_last.set(ev.target().value())
+                />
+            </label>
+            <label>
+                "Show Last Name"
+                <input
+                    type="checkbox"
+                    name="use_last"
+                    prop:checked=use_last
+                    on:change:target=move |ev| set_use_last.set(ev.target().checked())
+                />
+            </label>
+        </form>
+    }
+}
+
+#[component]
+fn ManualVersion() -> impl IntoView {
+    let first = NodeRef::<Input>::new();
+    let last = NodeRef::<Input>::new();
+    let use_last = NodeRef::<Input>::new();
+
+    let mut prev_name = String::new();
+    let on_change = move |_| {
+        log("      listener");
+        let first = first.get().unwrap();
+        let last = last.get().unwrap();
+        let use_last = use_last.get().unwrap();
+        let this_one = if use_last.checked() {
+            format!("{} {}", first.value(), last.value())
+        } else {
+            first.value()
+        };
+
+        if this_one != prev_name {
+            log(&this_one);
+            prev_name = this_one;
         }
     };
 
     view! {
-        // This component just displays the two kinds of children,
-        // embedding them in some other markup
-        <TakesChildren
-            // for component props, you can shorthand
-            // `render_prop=render_prop` => `render_prop`
-            // (this doesn't work for HTML element attributes)
-            render_prop
-        >
-            // these look just like the children of an HTML element
-            <p>"Here's a child."</p>
-            <p>"Here's another child."</p>
-        </TakesChildren>
-        <hr/>
-        // This component actually iterates over and wraps the children
-        <WrapsChildren>
-            <p>"Here's a child."</p>
-            <p>"Here's another child."</p>
-        </WrapsChildren>
+        <h1>"Manual Version"</h1>
+        <form on:change=on_change>
+            <label>"First Name" <input type="text" name="first" node_ref=first/></label>
+            <label>"Last Name" <input type="text" name="last" node_ref=last/></label>
+            <label>
+                "Show Last Name" <input type="checkbox" name="use_last" checked node_ref=use_last/>
+            </label>
+        </form>
     }
 }
 
-/// Displays a `render_prop` and some children within markup.
-#[component]
-pub fn TakesChildren<F, IV>(
-    /// Takes a function (type F) that returns anything that can be
-    /// converted into a View (type IV)
-    render_prop: F,
-    /// `children` takes the `Children` type
-    /// this is an alias for `Box<dyn FnOnce() -> Fragment>`
-    /// ... aren't you glad we named it `Children` instead?
-    children: Children,
-) -> impl IntoView
-where
-    F: Fn() -> IV,
-    IV: IntoView,
-{
-    view! {
-        <h1><code>"<TakesChildren/>"</code></h1>
-        <h2>"Render Prop"</h2>
-        {render_prop()}
-        <hr/>
-        <h2>"Children"</h2>
-        {children()}
-    }
-}
-
-/// Wraps each child in an `<li>` and embeds them in a `<ul>`.
-#[component]
-pub fn WrapsChildren(children: ChildrenFragment) -> impl IntoView {
-    // children() returns a `Fragment`, which has a
-    // `nodes` field that contains a Vec<View>
-    // this means we can iterate over the children
-    // to create something new!
-    let children = children()
-        .nodes
-        .into_iter()
-        .map(|child| view! { <li>{child}</li> })
-        .collect::<Vec<_>>();
-
-    view! {
-        <h1><code>"<WrapsChildren/>"</code></h1>
-        // wrap our wrapped children in a UL
-        <ul>{children}</ul>
-    }
+fn log(msg: impl std::fmt::Display) {
+    let log = use_context::<LogContext>().unwrap().0;
+    log.update(|log| log.push(msg.to_string()));
 }
