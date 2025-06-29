@@ -1,18 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-  <style>
-    .red {
-      color: red;
-    }
-  </style>
-<link rel="modulepreload" href="/leptos-tutorial-f45ea2a15cc455dc.js" crossorigin="anonymous" integrity="sha384-3KCCQF91MBPs5gIEdKkR2AosKhiTX4DJjc3CsFGFJABO2OX9Ipyx24QxNANcBmR+"><link rel="preload" href="/leptos-tutorial-f45ea2a15cc455dc_bg.wasm" crossorigin="anonymous" integrity="sha384-1kOhvlX0a5uDNRE4JteGr/eBVLURSHIBi3BnVUl+ChBbZTzOAUMxV0guS4NUp2Er" as="fetch" type="application/wasm"></head>
-
-<body>
+  <meta charset="UTF-8" />
+  <title>Leptos Playground</title>
+  
 <script type="module">
-import init, * as bindings from '/leptos-tutorial-f45ea2a15cc455dc.js';
-const wasm = await init({ module_or_path: '/leptos-tutorial-f45ea2a15cc455dc_bg.wasm' });
+import init, * as bindings from '/leptos-tutorial-914aa82a0149c72f.js';
+const wasm = await init({ module_or_path: '/leptos-tutorial-914aa82a0149c72f_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -20,7 +15,70 @@ window.wasmBindings = bindings;
 
 dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
-</script><script>"use strict";
+</script>
+  <link rel="stylesheet" href="https://unpkg.com/open-props" />
+
+  <!-- optional imports that use the props -->
+  <link rel="stylesheet" href="https://unpkg.com/open-props/normalize.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/open-props/buttons.min.css" />
+
+  <style>
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      text-align: center;
+    }
+
+    p {
+      margin: var(--size-2);
+    }
+
+    body>picture,
+    button,
+    p,
+    progress {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+    }
+
+    img {
+      height: 100px;
+      width: auto;
+      margin: auto;
+    }
+
+    .red {
+      color: red;
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .italics {
+      font-style: italic;
+    }
+
+    .smallcaps {
+      font-variant: small-caps;
+    }
+  </style>
+<link rel="modulepreload" href="/leptos-tutorial-914aa82a0149c72f.js" crossorigin="anonymous" integrity="sha384-Bniyp84OZmuhFhV4EzW0C3ivt9YF3v0LeAOyUlilxAy9YHeD72EWwwS+f6O9j/l+"><link rel="preload" href="/leptos-tutorial-914aa82a0149c72f_bg.wasm" crossorigin="anonymous" integrity="sha384-ZNRCNDhLorGkk+HUlKxyhZHZg+EVsZ27kJRxjGcEs5GJAm8R260YoaAnsC5XgUjy" as="fetch" type="application/wasm"></head>
+
+<body>
+  <picture>
+    <source srcset="
+          https://raw.githubusercontent.com/leptos-rs/leptos/main/docs/logos/Leptos_logo_pref_dark_RGB.svg
+        " media="(prefers-color-scheme: dark)" />
+    <img src="https://raw.githubusercontent.com/leptos-rs/leptos/main/docs/logos/Leptos_logo_RGB.svg"
+      alt="Leptos Logo" />
+  </picture>
+<script>"use strict";
 
 (function () {
 
