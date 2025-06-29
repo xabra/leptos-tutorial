@@ -5,106 +5,64 @@ fn main() {
     mount_to_body(App);
 }
 
-#[component]
-fn App() -> impl IntoView {
-    view! {
-        <DynamicList initial_length=5/>
-    }
+use reactive_stores::Store;
+
+#[derive(Store, Debug, Clone)]
+pub struct Data {
+    #[store(key: String = |row| row.key.clone())]
+    rows: Vec<DatabaseEntry>,
+}
+
+#[derive(Store, Debug, Clone)]
+struct DatabaseEntry {
+    key: String,
+    value: i32,
 }
 
 #[component]
-fn DynamicList(
-    /// The number of counters to begin with.
-    initial_length: usize,
-) -> impl IntoView {
-    // This dynamic list will use the <For/> component.
-    // <For/> is a keyed list. This means that each row
-    // has a defined key. If the key does not change, the row
-    // will not be re-rendered. When the list changes, only
-    // the minimum number of changes will be made to the DOM.
-
-    // `next_counter_id` will let us generate unique IDs
-    // we do this by simply incrementing the ID by one
-    // each time we create a counter
-    let mut next_counter_id = initial_length;
-
-    // we generate an initial list as in <StaticList/>
-    // but this time we include the ID along with the signal
-    // see NOTE in add_counter below re: ArcRwSignal
-    let initial_counters = (0..initial_length)
-        .map(|id| (id, ArcRwSignal::new(id + 1)))
-        .collect::<Vec<_>>();
-
-    // now we store that initial list in a signal
-    // this way, we'll be able to modify the list over time,
-    // adding and removing counters, and it will change reactively
-    let (counters, set_counters) = signal(initial_counters);
-
-    let add_counter = move |_| {
-        // create a signal for the new counter
-        // we use ArcRwSignal here, instead of RwSignal
-        // ArcRwSignal is a reference-counted type, rather than the arena-allocated
-        // signal types we've been using so far.
-        // When we're creating a collection of signals like this, using ArcRwSignal
-        // allows each signal to be deallocated when its row is removed.
-        let sig = ArcRwSignal::new(next_counter_id + 1);
-        // add this counter to the list of counters
-        set_counters.update(move |counters| {
-            // since `.update()` gives us `&mut T`
-            // we can just use normal Vec methods like `push`
-            counters.push((next_counter_id, sig))
-        });
-        // increment the ID so it's always unique
-        next_counter_id += 1;
-    };
+pub fn App() -> impl IntoView {
+    // instead of a signal with the rows, we create a store for Data
+    let data = Store::new(Data {
+        rows: vec![
+            DatabaseEntry {
+                key: "foo".to_string(),
+                value: 10,
+            },
+            DatabaseEntry {
+                key: "bar".to_string(),
+                value: 20,
+            },
+            DatabaseEntry {
+                key: "baz".to_string(),
+                value: 15,
+            },
+        ],
+    });
 
     view! {
-        <div>
-            <button on:click=add_counter>
-                "Add Counter"
-            </button>
-            <ul>
-                // The <For/> component is central here
-                // This allows for efficient, key list rendering
-                <For
-                    // `each` takes any function that returns an iterator
-                    // this should usually be a signal or derived signal
-                    // if it's not reactive, just render a Vec<_> instead of <For/>
-                    each=move || counters.get()
-                    // the key should be unique and stable for each row
-                    // using an index is usually a bad idea, unless your list
-                    // can only grow, because moving items around inside the list
-                    // means their indices will change and they will all rerender
-                    key=|counter| counter.0
-                    // `children` receives each item from your `each` iterator
-                    // and returns a view
-                    children=move |(id, count)| {
-                        // we can convert our ArcRwSignal to a Copy-able RwSignal
-                        // for nicer DX when moving it into the view
-                        let count = RwSignal::from(count);
-                        view! {
-                            <li>
-                                <button
-                                    on:click=move |_| *count.write() += 1
-                                >
-                                    {count}
-                                </button>
-                                <button
-                                    on:click=move |_| {
-                                        set_counters
-                                            .write()
-                                            .retain(|(counter_id, _)| {
-                                                counter_id != &id
-                                            });
-                                    }
-                                >
-                                    "Remove"
-                                </button>
-                            </li>
-                        }
-                    }
-                />
-            </ul>
-        </div>
+        // when we click, update each row,
+        // doubling its value
+        <button on:click=move |_| {
+            // allows iterating over the entries in an iterable store field
+            use reactive_stores::StoreFieldIterator;
+
+            // calling rows() gives us access to the rows
+            for row in data.rows().iter_unkeyed() {
+                *row.value().write() *= 2;
+            }
+            // log the new value of the signal
+            leptos::logging::log!("{:?}", data.get());
+        }>
+            "Update Values"
+        </button>
+        // iterate over the rows and display each value
+        <For
+            each=move || data.rows()
+            key=|row| row.read().key.clone()
+            children=|child| {
+                let value = child.value();
+                view! { <p>{move || value.get()}</p> }
+            }
+        />
     }
 }
